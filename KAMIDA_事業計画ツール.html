@@ -78,6 +78,43 @@ input.actual-input:focus { outline: none; border-color: #2d6a9f; background: #e0
 .bar-val { font-size: 0.68rem; color: #333; position: absolute; right: 5px; top: 50%; transform: translateY(-50%); }
 
 .note { font-size: 0.7rem; color: #999; margin-top: 12px; line-height: 1.6; padding: 8px; background: #f8f9fa; border-radius: 6px; }
+/* ダッシュボード */
+.db-section { margin-bottom: 18px; }
+.db-section-title { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+.db-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+.db-kpi { background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); border-left: 4px solid #2d6a9f; }
+.db-kpi.g { border-left-color: #27ae60; }
+.db-kpi.o { border-left-color: #e67e22; }
+.db-kpi.r { border-left-color: #e74c3c; }
+.db-kpi .dk-label { font-size: 0.72rem; color: #888; margin-bottom: 4px; }
+.db-kpi .dk-val { font-size: 1.35rem; font-weight: 800; color: #1a3a5c; }
+.db-kpi .dk-sub { font-size: 0.68rem; color: #aaa; margin-top: 3px; }
+.db-kpi .dk-val.pos { color: #27ae60; }
+.db-kpi .dk-val.neg { color: #e74c3c; }
+
+.db-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+.db-card { background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+.db-card h3 { font-size: 0.82rem; font-weight: 700; color: #1a3a5c; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #eee; }
+
+.progress-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.progress-label { width: 80px; font-size: 0.75rem; color: #555; text-align: right; white-space: nowrap; }
+.progress-track { flex: 1; background: #eef1f5; border-radius: 6px; height: 14px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 6px; transition: width 0.4s; }
+.progress-val { font-size: 0.75rem; font-weight: 700; width: 60px; text-align: right; white-space: nowrap; }
+
+.db-month-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px; }
+.db-month-chip { border-radius: 7px; padding: 8px 6px; text-align: center; border: 1px solid #e0e8f0; }
+.db-month-chip .mc-month { font-size: 0.68rem; color: #888; }
+.db-month-chip .mc-val { font-size: 0.88rem; font-weight: 700; color: #1a3a5c; margin: 2px 0; }
+.db-month-chip .mc-rate { font-size: 0.65rem; }
+.db-month-chip.hit { background: #f0faf4; border-color: #a8d8bc; }
+.db-month-chip.miss { background: #fff8f0; border-color: #f5c69a; }
+.db-month-chip.bad { background: #fff0f0; border-color: #f5a8a8; }
+.db-month-chip.empty { background: #f8f9fa; border-color: #e0e0e0; }
+
+.btn-cta { display: block; width: 100%; padding: 13px; background: #2d6a9f; color: #fff; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 700; cursor: pointer; text-align: center; margin-top: 8px; transition: background 0.2s; }
+.btn-cta:hover { background: #1a3a5c; }
+
 .month-ctrl { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 0.8rem; }
 .month-ctrl label { color: #555; }
 .month-ctrl input[type="number"] { width: 70px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 5px; text-align: right; }
@@ -222,39 +259,20 @@ input.actual-input:focus { outline: none; border-color: #2d6a9f; background: #e0
 
   <!-- 右：結果パネル -->
   <div>
-    <!-- KPIカード -->
-    <div class="kpi-row">
-      <div class="kpi">
-        <div class="kl">月次手数料単価</div>
-        <div class="kv" id="kv0">-</div>
-        <div class="ks">1台あたり</div>
-      </div>
-      <div class="kpi g">
-        <div class="kl">累計計画収入</div>
-        <div class="kv" id="kv1">-</div>
-        <div class="ks" id="ks1">-</div>
-      </div>
-      <div class="kpi" id="kpi2">
-        <div class="kl">累計純利益（税引後）</div>
-        <div class="kv" id="kv2">-</div>
-        <div class="ks" id="ks2">-</div>
-      </div>
-      <div class="kpi o">
-        <div class="kl">損益分岐台数</div>
-        <div class="kv" id="kv3">-</div>
-        <div class="ks">月額固定費ベース</div>
-      </div>
-    </div>
-
     <!-- タブ -->
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('monthly')">月次推移・実績</button>
-      <button class="tab-btn" onclick="switchTab('annual')">年次P&amp;L</button>
-      <button class="tab-btn" onclick="switchTab('chart')">グラフ</button>
+      <button class="tab-btn active" onclick="switchTab('dashboard')">📊 ダッシュボード</button>
+      <button class="tab-btn" onclick="switchTab('monthly')">📅 月次推移・実績入力</button>
+      <button class="tab-btn" onclick="switchTab('annual')">📈 年次P&amp;L</button>
+    </div>
+
+    <!-- ダッシュボードタブ -->
+    <div id="tab-dashboard" class="tab-content active panel">
+      <div id="dashboardContent"></div>
     </div>
 
     <!-- 月次タブ -->
-    <div id="tab-monthly" class="tab-content active panel">
+    <div id="tab-monthly" class="tab-content panel">
       <div class="month-ctrl">
         <span><label>表示年: </label>
         <select id="viewYear" onchange="calc()"></select></span>
@@ -319,11 +337,6 @@ input.actual-input:focus { outline: none; border-color: #2d6a9f; background: #e0
       </div>
     </div>
 
-    <!-- グラフタブ -->
-    <div id="tab-chart" class="tab-content panel">
-      <div style="font-size:0.78rem;color:#555;margin-bottom:10px;">月次 手数料収入(青) / 利益(緑) / 実績収入(橙)</div>
-      <div id="barChart"></div>
-    </div>
   </div>
 </div>
 
@@ -363,6 +376,153 @@ function switchTab(name) {
   event.target.classList.add('active');
 }
 
+// ─── ダッシュボード描画 ──────────────────────
+function renderDashboard(months, perUnitIncome, monthlyFixed, bep, cumNet, actuals) {
+  const today = new Date();
+  const totalMonths = months.length;
+
+  // 実績が入っている月だけ集計
+  let actEnteredCount = 0;
+  let actTotalUnits = 0, actTotalIncome = 0;
+  let planForActMonths = 0;
+  months.forEach(m => {
+    const key = `${m.year}-${String(m.month).padStart(2,'0')}`;
+    const a = actuals[key];
+    if (a !== undefined) {
+      actEnteredCount++;
+      actTotalUnits += Number(a);
+      actTotalIncome += Number(a) * perUnitIncome;
+      planForActMonths += m.income;
+    }
+  });
+  const overallRate = planForActMonths > 0 ? (actTotalIncome / planForActMonths * 100) : null;
+
+  // 今月に対応するプランMonth
+  const thisMonthKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+  const thisMonthPlan = months.find(m => `${m.year}-${String(m.month).padStart(2,'0')}` === thisMonthKey);
+  const thisActual = actuals[thisMonthKey];
+
+  // 累計計画収入
+  const totalPlanIncome = months.reduce((s, m) => s + m.income, 0);
+  const totalPlanUnits = months.reduce((s, m) => s + m.units, 0);
+
+  // KPIカード
+  const kpiHtml = `
+  <div class="db-section">
+    <div class="db-section-title">計画サマリー（${totalMonths}ヶ月）</div>
+    <div class="db-kpi-grid">
+      <div class="db-kpi">
+        <div class="dk-label">1台あたり手数料</div>
+        <div class="dk-val">${fmt(perUnitIncome)}</div>
+        <div class="dk-sub">販売単価 × 手数料率</div>
+      </div>
+      <div class="db-kpi g">
+        <div class="dk-label">累計計画収入</div>
+        <div class="dk-val">${fmt(totalPlanIncome)}</div>
+        <div class="dk-sub">計画台数 ${totalPlanUnits.toLocaleString()}台</div>
+      </div>
+      <div class="db-kpi ${cumNet >= 0 ? 'g' : 'r'}">
+        <div class="dk-label">累計純利益（税引後）</div>
+        <div class="dk-val ${cumNet >= 0 ? 'pos' : 'neg'}">${fmt(cumNet)}</div>
+        <div class="dk-sub">${totalMonths}ヶ月累計</div>
+      </div>
+      <div class="db-kpi o">
+        <div class="dk-label">損益分岐点</div>
+        <div class="dk-val">${bep}台<span style="font-size:0.75rem;font-weight:400;">/月</span></div>
+        <div class="dk-sub">この台数を超えると黒字</div>
+      </div>
+    </div>
+  </div>`;
+
+  // 今月の状況
+  let thisMonthHtml = '';
+  if (thisMonthPlan) {
+    const act = thisActual !== undefined ? Number(thisActual) : null;
+    const actInc = act !== null ? act * perUnitIncome : null;
+    const rate = actInc !== null && thisMonthPlan.income > 0 ? (actInc / thisMonthPlan.income * 100) : null;
+    const rateColor = rate === null ? '#aaa' : rate >= 100 ? '#27ae60' : rate >= 50 ? '#e67e22' : '#e74c3c';
+    thisMonthHtml = `
+    <div class="db-card">
+      <h3>📅 今月（${today.getFullYear()}年${today.getMonth()+1}月）の状況</h3>
+      <div class="progress-row">
+        <span class="progress-label">計画台数</span>
+        <div class="progress-track"><div class="progress-fill" style="width:100%;background:#2d6a9f;"></div></div>
+        <span class="progress-val" style="color:#2d6a9f;">${thisMonthPlan.units}台</span>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">実績台数</span>
+        <div class="progress-track"><div class="progress-fill" style="width:${rate !== null ? Math.min(100, rate).toFixed(0) : 0}%;background:${rateColor};"></div></div>
+        <span class="progress-val" style="color:${rateColor};">${act !== null ? act + '台' : '未入力'}</span>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">計画収入</span>
+        <div class="progress-track"><div class="progress-fill" style="width:100%;background:#b0c8e0;"></div></div>
+        <span class="progress-val" style="color:#555;">${fmtM(thisMonthPlan.income)}</span>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">実績収入</span>
+        <div class="progress-track"><div class="progress-fill" style="width:${rate !== null ? Math.min(100, rate).toFixed(0) : 0}%;background:${rateColor};opacity:0.7;"></div></div>
+        <span class="progress-val" style="color:${rateColor};">${actInc !== null ? fmtM(actInc) : '—'}</span>
+      </div>
+      ${rate !== null ? `<div style="margin-top:10px;text-align:center;font-size:1.1rem;font-weight:800;color:${rateColor};">達成率 ${rate.toFixed(0)}%</div>` : `<div style="margin-top:10px;text-align:center;font-size:0.78rem;color:#aaa;">↓ 実績を入力してください</div>`}
+    </div>`;
+  } else {
+    thisMonthHtml = `<div class="db-card"><h3>📅 今月の状況</h3><p style="color:#aaa;font-size:0.8rem;padding:10px 0;">今月は計画期間外です</p></div>`;
+  }
+
+  // 実績サマリー
+  const actSummaryHtml = `
+  <div class="db-card">
+    <h3>📝 実績入力状況</h3>
+    <div class="progress-row">
+      <span class="progress-label">入力済み月</span>
+      <div class="progress-track"><div class="progress-fill" style="width:${(actEnteredCount/totalMonths*100).toFixed(0)}%;background:#2d6a9f;"></div></div>
+      <span class="progress-val" style="color:#2d6a9f;">${actEnteredCount} / ${totalMonths}月</span>
+    </div>
+    ${overallRate !== null ? `
+    <div class="progress-row">
+      <span class="progress-label">総達成率</span>
+      <div class="progress-track"><div class="progress-fill" style="width:${Math.min(100,overallRate).toFixed(0)}%;background:${overallRate>=100?'#27ae60':overallRate>=50?'#e67e22':'#e74c3c'};"></div></div>
+      <span class="progress-val" style="color:${overallRate>=100?'#27ae60':overallRate>=50?'#e67e22':'#e74c3c'};">${overallRate.toFixed(0)}%</span>
+    </div>
+    <div style="margin-top:6px;font-size:0.75rem;color:#555;">
+      実績収入合計: <strong>${fmtM(actTotalIncome)}</strong>　計画: <strong>${fmtM(planForActMonths)}</strong>　差異: <strong style="color:${actTotalIncome-planForActMonths>=0?'#27ae60':'#e74c3c'}">${fmtM(actTotalIncome-planForActMonths)}</strong>
+    </div>` : `<p style="color:#aaa;font-size:0.75rem;margin-top:8px;">まだ実績が入力されていません</p>`}
+    <button class="btn-cta" onclick="document.querySelectorAll('.tab-btn')[1].click()">📝 実績を入力する →</button>
+  </div>`;
+
+  // 月次チップ（最近12ヶ月）
+  const recentMonths = months.slice(0, 12);
+  const chips = recentMonths.map(m => {
+    const key = `${m.year}-${String(m.month).padStart(2,'0')}`;
+    const a = actuals[key];
+    let chipCls = 'empty', rateStr = '未入力', actStr = '—';
+    if (a !== undefined) {
+      const r = m.income > 0 ? (Number(a) * perUnitIncome / m.income * 100) : 0;
+      chipCls = r >= 100 ? 'hit' : r >= 50 ? 'miss' : 'bad';
+      rateStr = r.toFixed(0) + '%';
+      actStr = a + '台';
+    }
+    return `<div class="db-month-chip ${chipCls}">
+      <div class="mc-month">${m.month}月</div>
+      <div class="mc-val">${actStr}</div>
+      <div class="mc-rate" style="color:${chipCls==='hit'?'#27ae60':chipCls==='miss'?'#e67e22':chipCls==='bad'?'#e74c3c':'#aaa'}">${rateStr}</div>
+    </div>`;
+  }).join('');
+
+  const chipsHtml = `
+  <div class="db-section">
+    <div class="db-section-title">月次実績サマリー（計画開始〜12ヶ月）</div>
+    <div class="db-month-grid">${chips}</div>
+    <div style="margin-top:8px;font-size:0.7rem;color:#aaa;">
+      <span style="color:#27ae60;">■</span> 達成　<span style="color:#e67e22;">■</span> 50〜99%　<span style="color:#e74c3c;">■</span> 50%未満　<span style="color:#bbb;">■</span> 未入力
+    </div>
+  </div>`;
+
+  document.getElementById('dashboardContent').innerHTML = kpiHtml +
+    `<div class="db-row2">${thisMonthHtml}${actSummaryHtml}</div>` + chipsHtml;
+}
+
 // ─── メイン計算 ──────────────────────────────
 function calc() {
   const price   = v('price');
@@ -386,8 +546,6 @@ function calc() {
 
   // BEP
   const bep = perUnitIncome > 0 ? Math.ceil(monthlyFixed / perUnitIncome) : '—';
-  document.getElementById('kv0').textContent = fmt(perUnitIncome);
-  document.getElementById('kv3').textContent = (bep === '—' ? '—' : bep + '台') ;
 
   // 開始月パース
   const [sy, sm] = startStr.split('-').map(Number);
@@ -408,16 +566,8 @@ function calc() {
     months.push({ year, month, label, units, income, cost, profit, cumPlan });
   }
 
-  // KPI（全期間累計）- 純利益は年次計算後に更新するためここでは営業利益ベース
+  // KPI（全期間累計）
   const totalIncome = months.reduce((s, m) => s + m.income, 0);
-  const totalOpProfit = months[months.length - 1].cumPlan;
-  document.getElementById('kv1').textContent = fmt(totalIncome);
-  document.getElementById('ks1').textContent = `${totalMonths}ヶ月累計`;
-  // 純利益KPIは年次計算後に更新（下記で上書き）
-  document.getElementById('kv2').textContent = fmt(totalOpProfit);
-  document.getElementById('kv2').className = 'kv ' + (totalOpProfit >= 0 ? 'pos' : 'neg');
-  document.getElementById('ks2').textContent = `営業利益`;
-  document.getElementById('kpi2').className = 'kpi ' + (totalOpProfit >= 0 ? 'g' : 'r');
 
   // 税・償却パラメータ
   const taxRate = v('taxRate') / 100;
@@ -458,11 +608,8 @@ function calc() {
   });
   document.getElementById('annualBody').innerHTML = annualRows;
 
-  // KPI純利益を年次累計で更新
-  document.getElementById('kv2').textContent = fmt(cumNet);
-  document.getElementById('kv2').className = 'kv ' + (cumNet >= 0 ? 'pos' : 'neg');
-  document.getElementById('ks2').textContent = `累計純利益`;
-  document.getElementById('kpi2').className = 'kpi ' + (cumNet >= 0 ? 'g' : 'r');
+  // ダッシュボード描画
+  renderDashboard(months, perUnitIncome, monthlyFixed, bep, cumNet, actuals);
 
   // 表示年セレクタ更新
   const years = [...new Set(months.map(m => m.year))];
