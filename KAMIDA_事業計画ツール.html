@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KAMIDA 仲介事業 収支計画ツール</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', 'Hiragino Sans', sans-serif; background: #f0f2f5; color: #222; font-size: 14px; }
+header { background: linear-gradient(135deg, #1a3a5c, #2d6a9f); color: #fff; padding: 18px 28px; display: flex; align-items: center; justify-content: space-between; }
+header h1 { font-size: 1.3rem; font-weight: 700; }
+header p { font-size: 0.78rem; opacity: 0.75; margin-top: 3px; }
+.save-badge { font-size: 0.72rem; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; }
+
+.layout { display: grid; grid-template-columns: 320px 1fr; gap: 16px; max-width: 1200px; margin: 16px auto; padding: 0 14px; }
+
+/* 左パネル */
+.panel { background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.panel h2 { font-size: 0.88rem; font-weight: 700; color: #1a3a5c; border-bottom: 2px solid #e0e8f0; padding-bottom: 6px; margin-bottom: 12px; }
+.sec-label { font-size: 0.72rem; font-weight: 700; color: #2d6a9f; background: #e8f0f8; padding: 3px 8px; border-radius: 4px; margin: 12px 0 8px; }
+.ig { margin-bottom: 10px; }
+.ig label { display: block; font-size: 0.75rem; color: #555; margin-bottom: 3px; }
+.ig .hint { font-size: 0.68rem; color: #aaa; margin-top: 2px; }
+.ir { display: flex; align-items: center; gap: 6px; }
+.ir input[type="number"] { width: 110px; padding: 5px 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.85rem; text-align: right; }
+.ir input[type="range"] { flex: 1; accent-color: #2d6a9f; }
+.unit { font-size: 0.75rem; color: #777; white-space: nowrap; }
+
+/* タブ */
+.tabs { display: flex; gap: 0; margin-bottom: 14px; border-radius: 8px; overflow: hidden; border: 1px solid #d0dce8; }
+.tab-btn { flex: 1; padding: 9px; background: #f0f4f8; border: none; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: #666; transition: all 0.2s; }
+.tab-btn.active { background: #1a3a5c; color: #fff; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* KPI */
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+.kpi { background: #fff; border-radius: 8px; padding: 11px 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.07); text-align: center; border-top: 3px solid #2d6a9f; }
+.kpi.g { border-top-color: #27ae60; }
+.kpi.o { border-top-color: #e67e22; }
+.kpi.r { border-top-color: #e74c3c; }
+.kpi .kl { font-size: 0.7rem; color: #888; }
+.kpi .kv { font-size: 1.2rem; font-weight: 700; color: #1a3a5c; margin: 3px 0; }
+.kpi .ks { font-size: 0.68rem; color: #aaa; }
+
+/* テーブル共通 */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+th { background: #1a3a5c; color: #fff; padding: 7px 8px; text-align: right; font-weight: 600; white-space: nowrap; }
+th:first-child { text-align: center; }
+td { padding: 6px 8px; text-align: right; border-bottom: 1px solid #eee; white-space: nowrap; }
+td:first-child { text-align: center; font-weight: 600; color: #1a3a5c; }
+tr:hover td { background: #f5f8fc; }
+.pos { color: #27ae60; font-weight: 700; }
+.neg { color: #e74c3c; font-weight: 700; }
+.zero { color: #e67e22; }
+
+/* 実績入力セル */
+input.actual-input {
+  width: 70px; padding: 3px 5px; border: 1px solid #b0c8e0; border-radius: 4px;
+  font-size: 0.78rem; text-align: right; background: #f0f8ff;
+}
+input.actual-input:focus { outline: none; border-color: #2d6a9f; background: #e0f0ff; }
+
+/* 達成率バー */
+.rate-bar { display: inline-block; width: 60px; height: 8px; background: #eee; border-radius: 4px; vertical-align: middle; margin-right: 4px; overflow: hidden; }
+.rate-fill { height: 100%; border-radius: 4px; background: #27ae60; }
+.rate-fill.warn { background: #e67e22; }
+.rate-fill.bad { background: #e74c3c; }
+
+/* バーチャート */
+.bar-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+.bar-lbl { width: 44px; font-size: 0.7rem; color: #555; text-align: right; }
+.bar-bg { flex: 1; background: #eef1f5; border-radius: 4px; height: 20px; position: relative; overflow: hidden; }
+.bar-income { height: 100%; border-radius: 4px; background: #2d6a9f; transition: width 0.3s; }
+.bar-profit { height: 100%; border-radius: 4px; background: #27ae60; transition: width 0.3s; }
+.bar-actual { height: 50%; border-radius: 2px; background: #f39c12; opacity: 0.85; position: absolute; bottom: 0; transition: width 0.3s; }
+.bar-val { font-size: 0.68rem; color: #333; position: absolute; right: 5px; top: 50%; transform: translateY(-50%); }
+
+.note { font-size: 0.7rem; color: #999; margin-top: 12px; line-height: 1.6; padding: 8px; background: #f8f9fa; border-radius: 6px; }
+.month-ctrl { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 0.8rem; }
+.month-ctrl label { color: #555; }
+.month-ctrl input[type="number"] { width: 70px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 5px; text-align: right; }
+.month-ctrl select { padding: 4px 6px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.8rem; }
+.btn-clear { padding: 5px 12px; background: #e74c3c; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-size: 0.75rem; }
+.btn-clear:hover { background: #c0392b; }
+.legend { display: flex; gap: 14px; font-size: 0.72rem; color: #666; margin-bottom: 10px; align-items: center; }
+.legend span { display: inline-flex; align-items: center; gap: 4px; }
+.dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>KAMIDA 仲介販売事業 収支計画ツール</h1>
+    <p>変数を変更すると自動再計算 ／ 実績データはブラウザに自動保存</p>
+  </div>
+  <div class="save-badge" id="saveBadge">保存済み ✓</div>
+</header>
+
+<div class="layout">
+  <!-- 左：変数パネル -->
+  <div class="panel" style="align-self:start; position:sticky; top:12px;">
+    <h2>変数設定</h2>
+
+    <div class="sec-label">📦 商品・手数料</div>
+    <div class="ig">
+      <label>KAMIDA 販売単価（円）</label>
+      <div class="ir">
+        <input type="number" id="price" value="3000000" min="100000" max="10000000" step="100000" oninput="sync('price','priceR');calc()">
+        <input type="range" id="priceR" min="100000" max="10000000" step="100000" value="3000000" oninput="sync('priceR','price');calc()">
+        <span class="unit">円</span>
+      </div>
+      <div class="hint">仮置き300万円</div>
+    </div>
+    <div class="ig">
+      <label>手数料率（%）</label>
+      <div class="ir">
+        <input type="number" id="rate" value="10" min="1" max="30" step="0.5" oninput="sync('rate','rateR');calc()">
+        <input type="range" id="rateR" min="1" max="30" step="0.5" value="10" oninput="sync('rateR','rate');calc()">
+        <span class="unit">%</span>
+      </div>
+    </div>
+
+    <div class="sec-label">📅 販売計画</div>
+    <div class="ig">
+      <label>計画開始月（例: 2026年4月→ 2026-04）</label>
+      <div class="ir">
+        <input type="month" id="startMonth" value="2026-04" style="padding:5px 8px;border:1px solid #ccc;border-radius:6px;font-size:0.85rem;" oninput="calc()">
+      </div>
+    </div>
+    <div class="ig">
+      <label>初月 販売目標台数</label>
+      <div class="ir">
+        <input type="number" id="units" value="3" min="1" max="500" step="1" oninput="sync('units','unitsR');calc()">
+        <input type="range" id="unitsR" min="1" max="500" step="1" value="3" oninput="sync('unitsR','units');calc()">
+        <span class="unit">台</span>
+      </div>
+    </div>
+    <div class="ig">
+      <label>月次成長率（%/月）</label>
+      <div class="ir">
+        <input type="number" id="mGrowth" value="10" min="0" max="100" step="1" oninput="sync('mGrowth','mGrowthR');calc()">
+        <input type="range" id="mGrowthR" min="0" max="100" step="1" value="10" oninput="sync('mGrowthR','mGrowth');calc()">
+        <span class="unit">%</span>
+      </div>
+      <div class="hint">年次換算: <span id="annualEquiv">-</span></div>
+    </div>
+    <div class="ig">
+      <label>計画期間</label>
+      <div class="ir">
+        <input type="number" id="months" value="24" min="3" max="60" step="1" oninput="sync('months','monthsR');calc()">
+        <input type="range" id="monthsR" min="3" max="60" step="1" value="24" oninput="sync('months','monthsR');calc()">
+        <span class="unit">ヶ月</span>
+      </div>
+    </div>
+
+    <div class="sec-label">💰 固定費（月額）</div>
+    <div class="ig">
+      <label>人件費（月額）</label>
+      <div class="ir">
+        <input type="number" id="labor" value="300000" min="0" max="2000000" step="10000" oninput="sync('labor','laborR');calc()">
+        <input type="range" id="laborR" min="0" max="2000000" step="10000" value="300000" oninput="sync('laborR','labor');calc()">
+        <span class="unit">円</span>
+      </div>
+    </div>
+    <div class="ig">
+      <label>営業・交通費（月額）</label>
+      <div class="ir">
+        <input type="number" id="travel" value="50000" min="0" max="500000" step="5000" oninput="sync('travel','travelR');calc()">
+        <input type="range" id="travelR" min="0" max="500000" step="5000" value="50000" oninput="sync('travelR','travel');calc()">
+        <span class="unit">円</span>
+      </div>
+    </div>
+    <div class="ig">
+      <label>マーケ・広告費（月額）</label>
+      <div class="ir">
+        <input type="number" id="mktg" value="40000" min="0" max="1000000" step="5000" oninput="sync('mktg','mktgR');calc()">
+        <input type="range" id="mktgR" min="0" max="1000000" step="5000" value="40000" oninput="sync('mktgR','mktg');calc()">
+        <span class="unit">円</span>
+      </div>
+    </div>
+    <div class="ig">
+      <label>その他経費（月額）</label>
+      <div class="ir">
+        <input type="number" id="other" value="25000" min="0" max="500000" step="5000" oninput="sync('other','otherR');calc()">
+        <input type="range" id="otherR" min="0" max="500000" step="5000" value="25000" oninput="sync('otherR','other');calc()">
+        <span class="unit">円</span>
+      </div>
+    </div>
+
+    <div class="sec-label">🏁 初期投資（1回のみ）</div>
+    <div class="ig">
+      <div class="ir">
+        <input type="number" id="init" value="1000000" min="0" max="20000000" step="100000" oninput="sync('init','initR');calc()">
+        <input type="range" id="initR" min="0" max="20000000" step="100000" value="1000000" oninput="sync('initR','init');calc()">
+        <span class="unit">円</span>
+      </div>
+      <div class="hint">デモ機・法人設立・Web等</div>
+    </div>
+  </div>
+
+  <!-- 右：結果パネル -->
+  <div>
+    <!-- KPIカード -->
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kl">月次手数料単価</div>
+        <div class="kv" id="kv0">-</div>
+        <div class="ks">1台あたり</div>
+      </div>
+      <div class="kpi g">
+        <div class="kl">累計計画収入</div>
+        <div class="kv" id="kv1">-</div>
+        <div class="ks" id="ks1">-</div>
+      </div>
+      <div class="kpi" id="kpi2">
+        <div class="kl">累計計画利益</div>
+        <div class="kv" id="kv2">-</div>
+        <div class="ks" id="ks2">-</div>
+      </div>
+      <div class="kpi o">
+        <div class="kl">損益分岐台数</div>
+        <div class="kv" id="kv3">-</div>
+        <div class="ks">月額固定費ベース</div>
+      </div>
+    </div>
+
+    <!-- タブ -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('monthly')">月次推移・実績</button>
+      <button class="tab-btn" onclick="switchTab('annual')">年次P&amp;L</button>
+      <button class="tab-btn" onclick="switchTab('chart')">グラフ</button>
+    </div>
+
+    <!-- 月次タブ -->
+    <div id="tab-monthly" class="tab-content active panel">
+      <div class="month-ctrl">
+        <span><label>表示年: </label>
+        <select id="viewYear" onchange="calc()"></select></span>
+        <div class="legend">
+          <span><span class="dot" style="background:#1a3a5c"></span>計画</span>
+          <span><span class="dot" style="background:#f0f8ff;border:1px solid #b0c8e0"></span>実績（入力）</span>
+          <span><span class="dot" style="background:#27ae60"></span>達成超</span>
+          <span><span class="dot" style="background:#e67e22"></span>50〜99%</span>
+          <span><span class="dot" style="background:#e74c3c"></span>50%未満</span>
+        </div>
+        <button class="btn-clear" onclick="clearActuals()">実績クリア</button>
+      </div>
+      <div class="tbl-wrap">
+        <table id="monthlyTable">
+          <thead>
+            <tr>
+              <th>月</th>
+              <th>計画台数</th>
+              <th>計画収入</th>
+              <th>計画費用</th>
+              <th>計画利益</th>
+              <th>実績台数<br><span style="font-weight:400;font-size:0.68rem;">↓入力</span></th>
+              <th>実績収入</th>
+              <th>達成率</th>
+              <th>差異</th>
+              <th>累積利益</th>
+            </tr>
+          </thead>
+          <tbody id="monthlyBody"></tbody>
+          <tfoot id="monthlyFoot"></tfoot>
+        </table>
+      </div>
+      <div class="note">
+        ※ 実績台数を入力するとブラウザに自動保存されます（再度開いても保持）<br>
+        ※ 達成率 = 実績収入 ÷ 計画収入 × 100
+      </div>
+    </div>
+
+    <!-- 年次タブ -->
+    <div id="tab-annual" class="tab-content panel">
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>年度</th>
+              <th>計画台数</th>
+              <th>売上規模(KAMIDA)</th>
+              <th>手数料収入</th>
+              <th>固定費合計</th>
+              <th>営業利益</th>
+              <th>累積利益</th>
+            </tr>
+          </thead>
+          <tbody id="annualBody"></tbody>
+        </table>
+      </div>
+      <div class="note">
+        ※ 税金・減価償却は含まれていません（概算モデル）<br>
+        ※ 初年度のみ初期投資を費用に加算
+      </div>
+    </div>
+
+    <!-- グラフタブ -->
+    <div id="tab-chart" class="tab-content panel">
+      <div style="font-size:0.78rem;color:#555;margin-bottom:10px;">月次 手数料収入(青) / 利益(緑) / 実績収入(橙)</div>
+      <div id="barChart"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── ユーティリティ ───────────────────────────
+function v(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function vs(id) { return document.getElementById(id).value; }
+function sync(src, dst) { document.getElementById(dst).value = document.getElementById(src).value; }
+function fmt(n) {
+  const abs = Math.abs(n);
+  if (abs >= 1e8) return (n/1e8).toFixed(2) + '億円';
+  if (abs >= 1e4) return Math.round(n/1e4) + '万円';
+  return n.toLocaleString() + '円';
+}
+function fmtM(n) { return Math.round(n/1e4) + '万円'; }
+
+// ─── 実績データ（localStorage） ──────────────
+const STORAGE_KEY = 'kamida_actuals';
+function loadActuals() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveActuals(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  document.getElementById('saveBadge').textContent = '保存済み ✓';
+}
+function clearActuals() {
+  if (!confirm('実績データをすべてクリアしますか？')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  calc();
+}
+
+// ─── タブ切替 ───────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ─── メイン計算 ──────────────────────────────
+function calc() {
+  const price   = v('price');
+  const rate    = v('rate') / 100;
+  const baseUnits = Math.max(1, Math.round(v('units')));
+  const mGrowth = v('mGrowth') / 100;
+  const totalMonths = Math.max(3, Math.min(60, Math.round(v('months'))));
+  const labor   = v('labor');
+  const travel  = v('travel');
+  const mktg    = v('mktg');
+  const other   = v('other');
+  const init    = v('init');
+  const startStr = vs('startMonth') || '2026-04';
+
+  const monthlyFixed = labor + travel + mktg + other;
+  const perUnitIncome = price * rate;
+
+  // 年次換算成長率表示
+  const annualEq = (Math.pow(1 + mGrowth, 12) - 1) * 100;
+  document.getElementById('annualEquiv').textContent = annualEq.toFixed(0) + '%/年相当';
+
+  // BEP
+  const bep = perUnitIncome > 0 ? Math.ceil(monthlyFixed / perUnitIncome) : '—';
+  document.getElementById('kv0').textContent = fmt(perUnitIncome);
+  document.getElementById('kv3').textContent = (bep === '—' ? '—' : bep + '台') ;
+
+  // 開始月パース
+  const [sy, sm] = startStr.split('-').map(Number);
+
+  // 月次データ生成
+  const months = [];
+  let cumPlan = 0;
+  for (let i = 0; i < totalMonths; i++) {
+    const d = new Date(sy, sm - 1 + i, 1);
+    const year = d.getFullYear();
+    const month = d.getMonth() + 1;
+    const label = `${year}年${month}月`;
+    const units = Math.round(baseUnits * Math.pow(1 + mGrowth, i));
+    const income = units * perUnitIncome;
+    const cost = monthlyFixed + (i === 0 ? init : 0);
+    const profit = income - cost;
+    cumPlan += profit;
+    months.push({ year, month, label, units, income, cost, profit, cumPlan });
+  }
+
+  // KPI（全期間累計）
+  const totalIncome = months.reduce((s, m) => s + m.income, 0);
+  const totalProfit = months[months.length - 1].cumPlan;
+  document.getElementById('kv1').textContent = fmt(totalIncome);
+  document.getElementById('ks1').textContent = `${totalMonths}ヶ月累計`;
+  document.getElementById('kv2').textContent = fmt(totalProfit);
+  document.getElementById('kv2').className = 'kv ' + (totalProfit >= 0 ? 'pos' : 'neg');
+  document.getElementById('ks2').textContent = `${totalMonths}ヶ月累計`;
+  document.getElementById('kpi2').className = 'kpi ' + (totalProfit >= 0 ? 'g' : 'r');
+
+  // 年一覧構築（年次タブ用）
+  const actuals = loadActuals();
+  const yearMap = {};
+  months.forEach(m => {
+    const key = m.year;
+    if (!yearMap[key]) yearMap[key] = { units: 0, income: 0, cost: 0, profit: 0 };
+    yearMap[key].units += m.units;
+    yearMap[key].income += m.income;
+    yearMap[key].cost += m.cost;
+    yearMap[key].profit += m.profit;
+  });
+  let annualRows = '';
+  let cumA = 0;
+  Object.entries(yearMap).forEach(([yr, d]) => {
+    cumA += d.profit;
+    const pc = d.profit >= 0 ? 'pos' : 'neg';
+    const cc = cumA >= 0 ? 'pos' : 'neg';
+    annualRows += `<tr>
+      <td>${yr}年</td>
+      <td>${d.units.toLocaleString()}台</td>
+      <td>${fmtM(price * d.units)}</td>
+      <td>${fmtM(d.income)}</td>
+      <td>${fmtM(d.cost)}</td>
+      <td class="${pc}">${fmtM(d.profit)}</td>
+      <td class="${cc}">${fmtM(cumA)}</td>
+    </tr>`;
+  });
+  document.getElementById('annualBody').innerHTML = annualRows;
+
+  // 表示年セレクタ更新
+  const years = [...new Set(months.map(m => m.year))];
+  const viewYearEl = document.getElementById('viewYear');
+  const prevYear = vs('viewYear');
+  viewYearEl.innerHTML = ['全期間', ...years.map(y => y + '年')].map(y =>
+    `<option value="${y}" ${y === prevYear ? 'selected' : ''}>${y}</option>`
+  ).join('');
+  const viewYear = vs('viewYear');
+
+  // 月次テーブル
+  const filtered = viewYear === '全期間' ? months : months.filter(m => m.year + '年' === viewYear);
+
+  let cumActualIncome = 0;
+  let cumActualProfit = 0;
+  let cumPlanRunning = 0;
+  // 実績累積は filtered の前から積む必要があるので全期間で計算
+  const beforeFiltered = months.filter(m => {
+    if (viewYear === '全期間') return false;
+    return m.year + '年' !== viewYear && months.indexOf(m) < months.indexOf(filtered[0]);
+  });
+  // 累積計画利益のオフセット
+  const planOffset = filtered.length > 0 ? filtered[0].cumPlan - filtered[0].profit : 0;
+
+  let bodyRows = '';
+  let footUnits = 0, footPlan = 0, footCost = 0, footProfit = 0;
+  let footActUnits = 0, footActIncome = 0;
+
+  filtered.forEach(m => {
+    const key = `${m.year}-${String(m.month).padStart(2,'0')}`;
+    const storedAct = actuals[key];
+    const actUnits = storedAct !== undefined ? storedAct : '';
+    const actIncome = actUnits !== '' ? actUnits * perUnitIncome : null;
+    const achieveRate = actIncome !== null && m.income > 0 ? (actIncome / m.income * 100) : null;
+
+    let rateCls = '';
+    let rateFillCls = '';
+    let rateStr = '—';
+    if (achieveRate !== null) {
+      rateStr = achieveRate.toFixed(0) + '%';
+      if (achieveRate >= 100) { rateCls = 'pos'; rateFillCls = ''; }
+      else if (achieveRate >= 50) { rateCls = 'zero'; rateFillCls = 'warn'; }
+      else { rateCls = 'neg'; rateFillCls = 'bad'; }
+    }
+
+    const diff = actIncome !== null ? actIncome - m.income : null;
+    const diffStr = diff !== null ? fmtM(diff) : '—';
+    const diffCls = diff !== null ? (diff >= 0 ? 'pos' : 'neg') : '';
+    const rateBarW = achieveRate !== null ? Math.min(100, achieveRate).toFixed(0) : 0;
+
+    footUnits += m.units;
+    footPlan += m.income;
+    footCost += m.cost;
+    footProfit += m.profit;
+    if (actUnits !== '') { footActUnits += Number(actUnits); footActIncome += actIncome; }
+
+    bodyRows += `<tr>
+      <td>${m.label}</td>
+      <td>${m.units}</td>
+      <td>${fmtM(m.income)}</td>
+      <td>${fmtM(m.cost)}</td>
+      <td class="${m.profit>=0?'pos':'neg'}">${fmtM(m.profit)}</td>
+      <td><input class="actual-input" type="number" min="0" max="9999" value="${actUnits}" placeholder="0" data-key="${key}" onchange="saveActual(this)"></td>
+      <td>${actIncome !== null ? fmtM(actIncome) : '—'}</td>
+      <td class="${rateCls}">
+        ${achieveRate !== null ? `<span class="rate-bar"><span class="rate-fill ${rateFillCls}" style="width:${rateBarW}%"></span></span>` : ''}
+        ${rateStr}
+      </td>
+      <td class="${diffCls}">${diffStr}</td>
+      <td class="${m.cumPlan>=0?'pos':'neg'}">${fmtM(m.cumPlan)}</td>
+    </tr>`;
+  });
+  document.getElementById('monthlyBody').innerHTML = bodyRows;
+
+  // フッター合計行
+  const actFoot = footActUnits > 0;
+  document.getElementById('monthlyFoot').innerHTML = `<tr style="background:#e8f0f8;font-weight:700;">
+    <td>合計</td>
+    <td>${footUnits}</td>
+    <td>${fmtM(footPlan)}</td>
+    <td>${fmtM(footCost)}</td>
+    <td class="${footProfit>=0?'pos':'neg'}">${fmtM(footProfit)}</td>
+    <td>${actFoot ? footActUnits : '—'}</td>
+    <td>${actFoot ? fmtM(footActIncome) : '—'}</td>
+    <td class="${actFoot ? (footActIncome>=footPlan?'pos':'neg') : ''}">${actFoot ? (footActIncome/footPlan*100).toFixed(0)+'%' : '—'}</td>
+    <td class="${actFoot ? (footActIncome-footPlan>=0?'pos':'neg') : ''}">${actFoot ? fmtM(footActIncome - footPlan) : '—'}</td>
+    <td class="${filtered.slice(-1)[0]?.cumPlan>=0?'pos':'neg'}">${filtered.length>0?fmtM(filtered.slice(-1)[0].cumPlan):'—'}</td>
+  </tr>`;
+
+  // バーチャート（グラフタブ）- 最大24ヶ月表示
+  const chartMonths = months.slice(0, Math.min(24, totalMonths));
+  const maxVal = Math.max(...chartMonths.map(m => m.income), 1);
+  let chart = '';
+  chartMonths.forEach(m => {
+    const key = `${m.year}-${String(m.month).padStart(2,'0')}`;
+    const storedAct = actuals[key];
+    const actIncome = storedAct !== undefined ? storedAct * perUnitIncome : null;
+    const iw = (m.income / maxVal * 100).toFixed(1);
+    const pw = m.profit > 0 ? (m.profit / maxVal * 100).toFixed(1) : 0;
+    const aw = actIncome !== null ? Math.min(100, actIncome / maxVal * 100).toFixed(1) : 0;
+    chart += `<div class="bar-row">
+      <span class="bar-lbl">${m.month}月</span>
+      <div class="bar-bg" style="height:28px;">
+        <div class="bar-income" style="width:${iw}%;height:50%;top:0;position:absolute;"></div>
+        <div class="bar-profit" style="width:${pw}%;height:50%;bottom:0;position:absolute;"></div>
+        ${actIncome !== null ? `<div class="bar-actual" style="width:${aw}%;background:#f39c12;height:4px;bottom:11px;"></div>` : ''}
+        <span class="bar-val" style="top:25%;">${fmtM(m.income)}</span>
+      </div>
+    </div>`;
+  });
+  document.getElementById('barChart').innerHTML = chart || '<p style="color:#aaa;padding:20px;">データなし</p>';
+}
+
+function saveActual(input) {
+  const key = input.getAttribute('data-key');
+  const val = input.value === '' ? undefined : parseInt(input.value);
+  const actuals = loadActuals();
+  if (val === undefined || isNaN(val)) { delete actuals[key]; }
+  else { actuals[key] = val; }
+  saveActuals(actuals);
+  document.getElementById('saveBadge').textContent = '保存済み ✓';
+  calc();
+}
+
+calc();
+</script>
+</body>
+</html>
