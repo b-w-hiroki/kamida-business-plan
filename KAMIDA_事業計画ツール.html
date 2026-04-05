@@ -198,6 +198,26 @@ input.actual-input:focus { outline: none; border-color: #2d6a9f; background: #e0
       </div>
       <div class="hint">デモ機・法人設立・Web等</div>
     </div>
+
+    <div class="sec-label">🧾 税・償却（年次P&amp;Lに反映）</div>
+    <div class="ig">
+      <label>実効税率（法人税等）</label>
+      <div class="ir">
+        <input type="number" id="taxRate" value="30" min="0" max="50" step="1" oninput="sync('taxRate','taxRateR');calc()">
+        <input type="range" id="taxRateR" min="0" max="50" step="1" value="30" oninput="sync('taxRateR','taxRate');calc()">
+        <span class="unit">%</span>
+      </div>
+      <div class="hint">中小法人の目安：約25〜35%</div>
+    </div>
+    <div class="ig">
+      <label>年間減価償却費</label>
+      <div class="ir">
+        <input type="number" id="depreciation" value="0" min="0" max="3000000" step="50000" oninput="sync('depreciation','depreciationR');calc()">
+        <input type="range" id="depreciationR" min="0" max="3000000" step="50000" value="0" oninput="sync('depreciationR','depreciation');calc()">
+        <span class="unit">円/年</span>
+      </div>
+      <div class="hint">PC・機材等を購入した場合に入力</div>
+    </div>
   </div>
 
   <!-- 右：結果パネル -->
@@ -215,7 +235,7 @@ input.actual-input:focus { outline: none; border-color: #2d6a9f; background: #e0
         <div class="ks" id="ks1">-</div>
       </div>
       <div class="kpi" id="kpi2">
-        <div class="kl">累計計画利益</div>
+        <div class="kl">累計純利益（税引後）</div>
         <div class="kv" id="kv2">-</div>
         <div class="ks" id="ks2">-</div>
       </div>
@@ -281,19 +301,21 @@ input.actual-input:focus { outline: none; border-color: #2d6a9f; background: #e0
             <tr>
               <th>年度</th>
               <th>計画台数</th>
-              <th>売上規模(KAMIDA)</th>
               <th>手数料収入</th>
-              <th>固定費合計</th>
+              <th>固定費</th>
               <th>営業利益</th>
-              <th>累積利益</th>
+              <th>減価償却</th>
+              <th>法人税等</th>
+              <th style="background:#0f2a45;">純利益</th>
+              <th>累積純利益</th>
             </tr>
           </thead>
           <tbody id="annualBody"></tbody>
         </table>
       </div>
       <div class="note">
-        ※ 税金・減価償却は含まれていません（概算モデル）<br>
-        ※ 初年度のみ初期投資を費用に加算
+        ※ 純利益 ＝ 営業利益 − 減価償却費 − 法人税等（赤字時は課税なし）<br>
+        ※ 初年度のみ初期投資を固定費に加算 ／ 税・償却は年次P&amp;Lのみ反映
       </div>
     </div>
 
@@ -386,15 +408,20 @@ function calc() {
     months.push({ year, month, label, units, income, cost, profit, cumPlan });
   }
 
-  // KPI（全期間累計）
+  // KPI（全期間累計）- 純利益は年次計算後に更新するためここでは営業利益ベース
   const totalIncome = months.reduce((s, m) => s + m.income, 0);
-  const totalProfit = months[months.length - 1].cumPlan;
+  const totalOpProfit = months[months.length - 1].cumPlan;
   document.getElementById('kv1').textContent = fmt(totalIncome);
   document.getElementById('ks1').textContent = `${totalMonths}ヶ月累計`;
-  document.getElementById('kv2').textContent = fmt(totalProfit);
-  document.getElementById('kv2').className = 'kv ' + (totalProfit >= 0 ? 'pos' : 'neg');
-  document.getElementById('ks2').textContent = `${totalMonths}ヶ月累計`;
-  document.getElementById('kpi2').className = 'kpi ' + (totalProfit >= 0 ? 'g' : 'r');
+  // 純利益KPIは年次計算後に更新（下記で上書き）
+  document.getElementById('kv2').textContent = fmt(totalOpProfit);
+  document.getElementById('kv2').className = 'kv ' + (totalOpProfit >= 0 ? 'pos' : 'neg');
+  document.getElementById('ks2').textContent = `営業利益`;
+  document.getElementById('kpi2').className = 'kpi ' + (totalOpProfit >= 0 ? 'g' : 'r');
+
+  // 税・償却パラメータ
+  const taxRate = v('taxRate') / 100;
+  const deprYear = v('depreciation');
 
   // 年一覧構築（年次タブ用）
   const actuals = loadActuals();
@@ -408,22 +435,34 @@ function calc() {
     yearMap[key].profit += m.profit;
   });
   let annualRows = '';
-  let cumA = 0;
+  let cumNet = 0;
   Object.entries(yearMap).forEach(([yr, d]) => {
-    cumA += d.profit;
+    const preTax = d.profit - deprYear;           // 税引前利益
+    const tax = preTax > 0 ? preTax * taxRate : 0; // 赤字時は課税なし
+    const netProfit = preTax - tax;
+    cumNet += netProfit;
     const pc = d.profit >= 0 ? 'pos' : 'neg';
-    const cc = cumA >= 0 ? 'pos' : 'neg';
+    const nc = netProfit >= 0 ? 'pos' : 'neg';
+    const cc = cumNet >= 0 ? 'pos' : 'neg';
     annualRows += `<tr>
       <td>${yr}年</td>
       <td>${d.units.toLocaleString()}台</td>
-      <td>${fmtM(price * d.units)}</td>
       <td>${fmtM(d.income)}</td>
       <td>${fmtM(d.cost)}</td>
       <td class="${pc}">${fmtM(d.profit)}</td>
-      <td class="${cc}">${fmtM(cumA)}</td>
+      <td style="color:#888;">${deprYear > 0 ? fmtM(deprYear) : '—'}</td>
+      <td style="color:#888;">${tax > 0 ? fmtM(tax) : '—'}</td>
+      <td class="${nc}" style="font-weight:800;">${fmtM(netProfit)}</td>
+      <td class="${cc}">${fmtM(cumNet)}</td>
     </tr>`;
   });
   document.getElementById('annualBody').innerHTML = annualRows;
+
+  // KPI純利益を年次累計で更新
+  document.getElementById('kv2').textContent = fmt(cumNet);
+  document.getElementById('kv2').className = 'kv ' + (cumNet >= 0 ? 'pos' : 'neg');
+  document.getElementById('ks2').textContent = `累計純利益`;
+  document.getElementById('kpi2').className = 'kpi ' + (cumNet >= 0 ? 'g' : 'r');
 
   // 表示年セレクタ更新
   const years = [...new Set(months.map(m => m.year))];
