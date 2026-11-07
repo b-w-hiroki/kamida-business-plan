@@ -268,7 +268,7 @@ input.actual-input:focus { outline: none; border-color: #2d6a9f; background: #e0
 
     <!-- ダッシュボードタブ -->
     <div id="tab-dashboard" class="tab-content active panel">
-      <div id="dashboardContent"></div>
+      <div id="dashboardContent"></div><section id="scenarioComparison" style="margin:16px 0;padding:16px;background:white;border-radius:10px;line-height:1.65;overflow-wrap:anywhere" aria-label="計画シナリオ比較"></section>
     </div>
 
     <!-- 月次タブ -->
@@ -340,6 +340,7 @@ input.actual-input:focus { outline: none; border-color: #2d6a9f; background: #e0
   </div>
 </div>
 
+<script src="scenarios.js"></script>
 <script>
 // ─── ユーティリティ ───────────────────────────
 function v(id) { return parseFloat(document.getElementById(id).value) || 0; }
@@ -565,6 +566,9 @@ function calc() {
     cumPlan += profit;
     months.push({ year, month, label, units, income, cost, profit, cumPlan });
   }
+
+  const scenarios = compareScenarios(months);
+  document.getElementById('scenarioComparison').innerHTML = '<h3>販売台数が変わった場合</h3><p>入力中の計画に対し台数を80%・100%・120%に変えた試算です。各月の台数を整数に丸め、単価・手数料率・費用は固定。確率予測ではありません。全期間の税・償却前利益を比較し、保存した計画や実績は変更しません。</p>' + scenarios.map(s => `<p><strong>${s.name}（台数${Math.round(s.multiplier*100)}%）</strong>：収入 ${fmtM(s.income)} ／ 利益 ${fmtM(s.profit)} ／ 標準との差 ${fmtM(s.profit-scenarios[1].profit)}</p>`).join('');
 
   // KPI（全期間累計）
   const totalIncome = months.reduce((s, m) => s + m.income, 0);
