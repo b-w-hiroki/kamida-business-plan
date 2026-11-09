@@ -637,6 +637,7 @@ function calc() {
   let bodyRows = '';
   let footUnits = 0, footPlan = 0, footCost = 0, footProfit = 0;
   let footActUnits = 0, footActIncome = 0;
+  let hasActuals = false;
 
   filtered.forEach(m => {
     const key = `${m.year}-${String(m.month).padStart(2,'0')}`;
@@ -664,7 +665,7 @@ function calc() {
     footPlan += m.income;
     footCost += m.cost;
     footProfit += m.profit;
-    if (actUnits !== '') { footActUnits += Number(actUnits); footActIncome += actIncome; }
+    if (actUnits !== '') { hasActuals = true; footActUnits += Number(actUnits); footActIncome += actIncome; }
 
     bodyRows += `<tr>
       <td>${m.label}</td>
@@ -685,7 +686,8 @@ function calc() {
   document.getElementById('monthlyBody').innerHTML = bodyRows;
 
   // フッター合計行
-  const actFoot = footActUnits > 0;
+  const actFoot = hasActuals;
+  const footAchieveRate = actFoot && footPlan > 0 ? footActIncome / footPlan * 100 : null;
   document.getElementById('monthlyFoot').innerHTML = `<tr style="background:#e8f0f8;font-weight:700;">
     <td>合計</td>
     <td>${footUnits}</td>
@@ -694,7 +696,7 @@ function calc() {
     <td class="${footProfit>=0?'pos':'neg'}">${fmtM(footProfit)}</td>
     <td>${actFoot ? footActUnits : '—'}</td>
     <td>${actFoot ? fmtM(footActIncome) : '—'}</td>
-    <td class="${actFoot ? (footActIncome>=footPlan?'pos':'neg') : ''}">${actFoot ? (footActIncome/footPlan*100).toFixed(0)+'%' : '—'}</td>
+    <td class="${footAchieveRate !== null ? (footAchieveRate>=100?'pos':'neg') : ''}">${footAchieveRate !== null ? footAchieveRate.toFixed(0)+'%' : '—'}</td>
     <td class="${actFoot ? (footActIncome-footPlan>=0?'pos':'neg') : ''}">${actFoot ? fmtM(footActIncome - footPlan) : '—'}</td>
     <td class="${filtered.slice(-1)[0]?.cumPlan>=0?'pos':'neg'}">${filtered.length>0?fmtM(filtered.slice(-1)[0].cumPlan):'—'}</td>
   </tr>`;
